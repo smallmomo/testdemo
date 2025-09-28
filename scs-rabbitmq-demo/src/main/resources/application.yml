@@ -1,0 +1,56 @@
+spring:
+  cloud:
+    function:
+      definition: producer;consumerA;consumerB
+    stream:
+      bindings:
+        # 生产者配置
+        producer-out-0:
+          destination: demo-exchange    # 交换机名称
+          content-type: application/json
+          producer:
+            required-groups: queue-a,queue-b  # 确保队列存在
+            routing-key-expression: headers['routeKey']  # 使用header中的routeKey作为路由键
+
+        # 消费者A配置（处理routeKey=A的消息）
+        consumerA-in-0:
+          destination: demo-exchange    # 使用相同的交换机
+          content-type: application/json
+          group: queue-a               # 队列名称
+          consumer:
+            bindQueue: true
+            bindRoutingKey: A          # 绑定routeKey=A的消息
+
+        # 消费者B配置（处理routeKey=B的消息）
+        consumerB-in-0:
+          destination: demo-exchange    # 使用相同的交换机
+          content-type: application/json
+          group: queue-b               # 队列名称
+          consumer:
+            bindQueue: true
+            bindRoutingKey: B          # 绑定routeKey=B的消息
+
+      rabbit:
+        bindings:
+          producer-out-0:
+            producer:
+              exchangeType: direct      # 使用direct类型的交换机
+              
+          consumerA-in-0:
+            consumer:
+              bindQueue: true
+              exchangeType: direct
+              
+          consumerB-in-0:
+            consumer:
+              bindQueue: true
+              exchangeType: direct
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+server:
+  port: 8081
